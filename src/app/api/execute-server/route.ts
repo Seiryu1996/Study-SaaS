@@ -114,7 +114,7 @@ async function executeCode(language: string, code: string, input?: string) {
       case 'js':
         return await executeJavaScript(code, tempDir, input)
       case 'html':
-        // HTML testing - extract text content for comparison
+        // HTML syntax validation
         if (!code.trim()) {
           return {
             output: '',
@@ -123,26 +123,50 @@ async function executeCode(language: string, code: string, input?: string) {
           }
         }
         
-        // Extract text content from HTML for testing
-        let textContent = code
-          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
-          .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '') // Remove style tags  
-          .replace(/<!--[\s\S]*?-->/g, '') // Remove comments
-          // Add newlines before block elements
-          .replace(/<(h[1-6]|p|div|section|article|header|footer|main|nav|aside)\b[^>]*>/gi, '\n$&')
-          .replace(/<\/(h[1-6]|p|div|section|article|header|footer|main|nav|aside)>/gi, '$&\n')
-          .replace(/<[^>]+>/g, '') // Remove all HTML tags
-          .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
-          .replace(/&lt;/g, '<') // Replace &lt; with <
-          .replace(/&gt;/g, '>') // Replace &gt; with >
-          .replace(/&amp;/g, '&') // Replace &amp; with &
-          .split('\n') // Split by newlines
-          .map(line => line.trim()) // Trim each line
-          .filter(line => line.length > 0) // Remove empty lines
-          .join('\n') // Join with newlines
+        const errors = []
+        
+        // Check for unclosed tags
+        const voidElements = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']
+        const openTags = []
+        const tagRegex = /<\/?(\w+)[^>]*>/g
+        let match
+        
+        while ((match = tagRegex.exec(code)) !== null) {
+          const tagName = match[1].toLowerCase()
+          const isClosing = match[0].startsWith('</')
+          const isSelfClosing = match[0].endsWith('/>')
+          
+          if (voidElements.includes(tagName)) {
+            continue
+          }
+          
+          if (isClosing) {
+            const lastOpenTag = openTags.pop()
+            if (lastOpenTag !== tagName) {
+              errors.push(`Tag mismatch: expected </${lastOpenTag}>, found </${tagName}>`)
+            }
+          } else if (!isSelfClosing) {
+            openTags.push(tagName)
+          }
+        }
+        
+        // Check for unclosed tags
+        if (openTags.length > 0) {
+          openTags.forEach(tag => {
+            errors.push(`Unclosed tag: <${tag}>`)
+          })
+        }
+        
+        if (errors.length > 0) {
+          return {
+            output: '',
+            error: errors.join('; '),
+            executionTime: Date.now() - startTime
+          }
+        }
         
         return {
-          output: textContent,
+          output: 'HTML基本構造',
           executionTime: Date.now() - startTime,
           htmlPreview: true
         }

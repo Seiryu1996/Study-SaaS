@@ -68,16 +68,21 @@ export default function TestRunner({ code, language, testCases, onTestRun }: Tes
           })
           result = await response.json()
           
-          const actualOutput = result.output?.trim() || ''
-          const expectedOutput = testCase.expectedOutput.trim()
-          passed = actualOutput === expectedOutput && !result.error
+          // HTML testing: pass if no errors (syntax validation)
+          if (language.toLowerCase() === 'html') {
+            passed = !result.error
+          } else {
+            const actualOutput = result.output?.trim() || ''
+            const expectedOutput = testCase.expectedOutput.trim()
+            passed = actualOutput === expectedOutput && !result.error
+          }
         }
 
         testResults.push({
           testId: testCase.id,
           passed,
           actualOutput: result.output || result.actualOutput || '',
-          expectedOutput: testCase.expectedOutput,
+          expectedOutput: language.toLowerCase() === 'html' ? 'Syntax validation' : testCase.expectedOutput,
           error: result.error
         })
       } catch (error) {
@@ -255,31 +260,51 @@ export default function TestRunner({ code, language, testCases, onTestRun }: Tes
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Expected Output:</span>
-                  <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded text-sm font-mono mt-1 text-gray-900 dark:text-gray-100">
-                    {testCase.expectedOutput}
-                  </div>
-                </div>
-
-                {result && (
+              {/* HTML tests only show validation result */}
+              {language.toLowerCase() === 'html' ? (
+                result && (
                   <div>
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Your Output:</span>
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Validation Result:</span>
                     <div className={`p-2 rounded text-sm font-mono mt-1 ${
                       result.passed 
                         ? 'bg-green-100 dark:bg-green-900/30 text-gray-900 dark:text-gray-100' 
                         : 'bg-red-100 dark:bg-red-900/30 text-gray-900 dark:text-gray-100'
                     }`}>
                       {result.error ? (
-                        <span className="text-red-600 dark:text-red-400">Error: {result.error}</span>
+                        <span className="text-red-600 dark:text-red-400">NG: {result.error}</span>
                       ) : (
-                        result.actualOutput || '(no output)'
+                        <span className="text-green-600 dark:text-green-400">OK</span>
                       )}
                     </div>
                   </div>
-                )}
-              </div>
+                )
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Expected Output:</span>
+                    <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded text-sm font-mono mt-1 text-gray-900 dark:text-gray-100">
+                      {testCase.expectedOutput}
+                    </div>
+                  </div>
+
+                  {result && (
+                    <div>
+                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Your Output:</span>
+                      <div className={`p-2 rounded text-sm font-mono mt-1 ${
+                        result.passed 
+                          ? 'bg-green-100 dark:bg-green-900/30 text-gray-900 dark:text-gray-100' 
+                          : 'bg-red-100 dark:bg-red-900/30 text-gray-900 dark:text-gray-100'
+                      }`}>
+                        {result.error ? (
+                          <span className="text-red-600 dark:text-red-400">Error: {result.error}</span>
+                        ) : (
+                          result.actualOutput || '(no output)'
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )
         })}
