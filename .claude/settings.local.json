@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__serena__list_dir",
+      "mcp__serena__activate_project",
+      "mcp__serena__check_onboarding_performed",
+      "mcp__serena__onboarding",
+      "mcp__serena__get_symbols_overview",
+      "mcp__serena__find_symbol",
+      "mcp__serena__think_about_collected_information",
+      "mcp__serena__write_memory",
+      "Bash(docker compose logs:*)",
+      "Bash(docker compose exec app npm run type-check:*)",
+      "Bash(docker compose exec:*)",
+      "Bash(curl:*)",
+      "Bash(mkdir:*)",
+      "Bash(docker compose restart:*)",
+      "Bash(docker compose build:*)",
+      "Bash(grep:*)",
+      "Bash(rm:*)",
+      "Bash(timeout 30 curl -X POST http://localhost:3000/api/execute )",
+      "Bash(timeout:*)",
+      "mcp__serena__find_file"
+    ],
+    "additionalDirectories": [
+      "/mnt/c/Users/上畑成龍/Desktop/dev"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "serena"
+  ]
+}
