@@ -1,356 +1,211 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useUser } from '@clerk/nextjs'
+import { Trash2, Edit, Plus } from 'lucide-react'
 import Header from '@/components/layout/Header'
-import { useTranslation } from '@/lib/i18n'
 
-interface ExerciseForm {
-  title: string
-  description: string
-  starterCode: string
-  solution: string
-  hints: string[]
-  order: number
-  testCases: Array<{
-    input?: string
-    expectedOutput: string
-    description: string
-  }>
-}
-
-interface LessonForm {
+interface Lesson {
+  id: string
   title: string
   description: string
   language: string
-  difficulty: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'
-  exercises: ExerciseForm[]
+  difficulty: string
+  exercises: any[]
 }
 
 export default function AdminPage() {
-  const { t } = useTranslation()
-  const [lesson, setLesson] = useState<LessonForm>({
-    title: '',
-    description: '',
-    language: 'javascript',
-    difficulty: 'BEGINNER',
-    exercises: []
-  })
+  const { user } = useUser()
+  const [lessons, setLessons] = useState<Lesson[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
 
-  const [currentExercise, setCurrentExercise] = useState<ExerciseForm>({
-    title: '',
-    description: '',
-    starterCode: '',
-    solution: '',
-    hints: [''],
-    order: 1,
-    testCases: [{ expectedOutput: '', description: '' }]
-  })
+  useEffect(() => {
+    checkAdminAndLoadLessons()
+  }, [])
 
-  const addHint = () => {
-    setCurrentExercise({
-      ...currentExercise,
-      hints: [...currentExercise.hints, '']
-    })
-  }
-
-  const updateHint = (index: number, value: string) => {
-    const newHints = [...currentExercise.hints]
-    newHints[index] = value
-    setCurrentExercise({ ...currentExercise, hints: newHints })
-  }
-
-  const addTestCase = () => {
-    setCurrentExercise({
-      ...currentExercise,
-      testCases: [...currentExercise.testCases, { expectedOutput: '', description: '' }]
-    })
-  }
-
-  const updateTestCase = (index: number, field: string, value: string) => {
-    const newTestCases = [...currentExercise.testCases]
-    newTestCases[index] = { ...newTestCases[index], [field]: value }
-    setCurrentExercise({ ...currentExercise, testCases: newTestCases })
-  }
-
-  const addExercise = () => {
-    setLesson({
-      ...lesson,
-      exercises: [...lesson.exercises, { ...currentExercise }]
-    })
-    
-    // Reset form
-    setCurrentExercise({
-      title: '',
-      description: '',
-      starterCode: '',
-      solution: '',
-      hints: [''],
-      order: lesson.exercises.length + 2,
-      testCases: [{ expectedOutput: '', description: '' }]
-    })
-  }
-
-  const createLesson = async () => {
+  const checkAdminAndLoadLessons = async () => {
     try {
-      const response = await fetch('/api/admin/lessons', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(lesson)
-      })
+      const response = await fetch('/api/admin/lessons')
       
-      if (response.ok) {
-        alert('レッスンが正常に作成されました！')
-        // Reset form
-        setLesson({
-          title: '',
-          description: '',
-          language: 'javascript',
-          difficulty: 'BEGINNER',
-          exercises: []
-        })
-      } else {
-        alert('エラーが発生しました')
+      if (response.status === 403) {
+        setError('管理者権限が必要です')
+        setLoading(false)
+        return
       }
-    } catch (error) {
-      alert('エラーが発生しました')
+      
+      if (!response.ok) {
+        throw new Error('データの取得に失敗しました')
+      }
+
+      const data = await response.json()
+      setLessons(data)
+      setIsAdmin(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました')
+    } finally {
+      setLoading(false)
     }
   }
 
+  const deleteLesson = async (lessonId: string, title: string) => {
+    if (!confirm(`「${title}」を削除しますか？この操作は取り消せません。`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/admin/lessons/${lessonId}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        throw new Error('削除に失敗しました')
+      }
+
+      setLessons(lessons.filter(lesson => lesson.id !== lessonId))
+      alert('レッスンを削除しました')
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'エラーが発生しました')
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Header />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">読み込み中...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Header />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">アクセス拒否</h1>
+            <p className="text-gray-600 dark:text-gray-400">{error}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
       
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">管理パネル - レッスン作成</h1>
-        
-        <div className="bg-white p-6 rounded-lg border shadow-sm mb-8">
-          <h2 className="text-xl font-semibold mb-4">レッスン情報</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">レッスンタイトル</label>
-              <input
-                type="text"
-                value={lesson.title}
-                onChange={(e) => setLesson({ ...lesson, title: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="JavaScript 基礎"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-2">プログラミング言語</label>
-              <select
-                value={lesson.language}
-                onChange={(e) => setLesson({ ...lesson, language: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="javascript">JavaScript</option>
-                <option value="python">Python</option>
-                <option value="html">HTML</option>
-                <option value="css">CSS</option>
-                <option value="typescript">TypeScript</option>
-                <option value="csharp">C#</option>
-                <option value="go">Go</option>
-                <option value="ruby">Ruby</option>
-                <option value="php">PHP</option>
-              </select>
-            </div>
-          </div>
-          
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">レッスン説明</label>
-            <textarea
-              value={lesson.description}
-              onChange={(e) => setLesson({ ...lesson, description: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="このレッスンの内容を説明してください..."
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-2">難易度</label>
-            <select
-              value={lesson.difficulty}
-              onChange={(e) => setLesson({ ...lesson, difficulty: e.target.value as any })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="BEGINNER">初級</option>
-              <option value="INTERMEDIATE">中級</option>
-              <option value="ADVANCED">上級</option>
-            </select>
-          </div>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            管理者ダッシュボード
+          </h1>
+          <a
+            href="/admin/lessons/new"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            新しいレッスンを作成
+          </a>
         </div>
 
-        {/* Exercise Form */}
-        <div className="bg-white p-6 rounded-lg border shadow-sm mb-8">
-          <h2 className="text-xl font-semibold mb-4">演習を追加</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">演習タイトル</label>
-              <input
-                type="text"
-                value={currentExercise.title}
-                onChange={(e) => setCurrentExercise({ ...currentExercise, title: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="変数とデータ型"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-2">順番</label>
-              <input
-                type="number"
-                value={currentExercise.order}
-                onChange={(e) => setCurrentExercise({ ...currentExercise, order: parseInt(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              レッスン管理
+            </h2>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">演習説明</label>
-            <textarea
-              value={currentExercise.description}
-              onChange={(e) => setCurrentExercise({ ...currentExercise, description: e.target.value })}
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="この演習で学ぶ内容を説明してください..."
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">スターターコード</label>
-              <textarea
-                value={currentExercise.starterCode}
-                onChange={(e) => setCurrentExercise({ ...currentExercise, starterCode: e.target.value })}
-                rows={8}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                placeholder="// 初期コードとコメント&#10;// ここにコードを書いてください:"
-              />
+          {lessons.length === 0 ? (
+            <div className="p-8 text-center">
+              <p className="text-gray-500 dark:text-gray-400">
+                レッスンがありません
+              </p>
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-2">解答コード</label>
-              <textarea
-                value={currentExercise.solution}
-                onChange={(e) => setCurrentExercise({ ...currentExercise, solution: e.target.value })}
-                rows={8}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                placeholder="完全な解答コード"
-              />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      タイトル
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      言語
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      難易度
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      エクササイズ数
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      操作
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {lessons.map((lesson) => (
+                    <tr key={lesson.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {lesson.title}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
+                            {lesson.description}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                          {lesson.language}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          lesson.difficulty === 'BEGINNER' 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                            : lesson.difficulty === 'INTERMEDIATE'
+                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                        }`}>
+                          {lesson.difficulty === 'BEGINNER' ? '初級' : 
+                           lesson.difficulty === 'INTERMEDIATE' ? '中級' : '上級'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {lesson.exercises.length}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <a
+                            href={`/admin/lessons/${lesson.id}/edit`}
+                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </a>
+                          <button
+                            onClick={() => deleteLesson(lesson.id, lesson.title)}
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
-
-          {/* Hints */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium">ヒント</label>
-              <button
-                onClick={addHint}
-                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
-              >
-                ヒントを追加
-              </button>
-            </div>
-            {currentExercise.hints.map((hint, index) => (
-              <input
-                key={index}
-                type="text"
-                value={hint}
-                onChange={(e) => updateHint(index, e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
-                placeholder={`ヒント ${index + 1}`}
-              />
-            ))}
-          </div>
-
-          {/* Test Cases */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium">テストケース</label>
-              <button
-                onClick={addTestCase}
-                className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-              >
-                テストケースを追加
-              </button>
-            </div>
-            {currentExercise.testCases.map((testCase, index) => (
-              <div key={index} className="border border-gray-200 rounded-lg p-4 mb-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium mb-1">入力 (オプション)</label>
-                    <input
-                      type="text"
-                      value={testCase.input || ''}
-                      onChange={(e) => updateTestCase(index, 'input', e.target.value)}
-                      className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                      placeholder="入力データ"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium mb-1">期待される出力</label>
-                    <input
-                      type="text"
-                      value={testCase.expectedOutput}
-                      onChange={(e) => updateTestCase(index, 'expectedOutput', e.target.value)}
-                      className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                      placeholder="期待される結果"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium mb-1">説明</label>
-                    <input
-                      type="text"
-                      value={testCase.description}
-                      onChange={(e) => updateTestCase(index, 'description', e.target.value)}
-                      className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                      placeholder="テストの説明"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <button
-            onClick={addExercise}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            演習を追加
-          </button>
-        </div>
-
-        {/* Created Exercises List */}
-        {lesson.exercises.length > 0 && (
-          <div className="bg-white p-6 rounded-lg border shadow-sm mb-8">
-            <h2 className="text-xl font-semibold mb-4">作成された演習 ({lesson.exercises.length})</h2>
-            <div className="space-y-2">
-              {lesson.exercises.map((exercise, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <span className="font-medium">{exercise.order}. {exercise.title}</span>
-                    <span className="text-sm text-gray-600 ml-2">({exercise.testCases.length} テストケース)</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Create Lesson Button */}
-        <div className="text-center">
-          <button
-            onClick={createLesson}
-            disabled={lesson.exercises.length === 0 || !lesson.title}
-            className="px-8 py-3 bg-green-600 text-white text-lg rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            レッスンを作成
-          </button>
+          )}
         </div>
       </div>
     </div>

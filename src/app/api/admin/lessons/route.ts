@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth/admin'
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId } = auth()
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: '認証が必要です' },
-        { status: 401 }
-      )
-    }
+    await requireAdmin()
+  } catch (error) {
+    return NextResponse.json(
+      { error: '管理者権限が必要です' },
+      { status: 403 }
+    )
+  }
+
+  try {
 
     const body = await req.json()
     const { title, description, language, difficulty, exercises } = body
@@ -85,14 +87,15 @@ async function getNextLessonOrder(): Promise<number> {
 
 export async function GET(req: NextRequest) {
   try {
-    const { userId } = auth()
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: '認証が必要です' },
-        { status: 401 }
-      )
-    }
+    await requireAdmin()
+  } catch (error) {
+    return NextResponse.json(
+      { error: '管理者権限が必要です' },
+      { status: 403 }
+    )
+  }
+
+  try {
 
     const lessons = await prisma.lesson.findMany({
       include: {

@@ -20,7 +20,8 @@
       "Bash(rm:*)",
       "Bash(timeout 30 curl -X POST http://localhost:3000/api/execute )",
       "Bash(timeout:*)",
-      "mcp__serena__find_file"
+      "mcp__serena__find_file",
+      "mcp__serena__search_for_pattern"
     ],
     "additionalDirectories": [
       "/mnt/c/Users/上畑成龍/Desktop/dev"
