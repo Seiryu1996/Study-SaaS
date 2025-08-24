@@ -11,8 +11,10 @@ const SUPPORTED_LANGUAGES = [
   { value: 'python', label: 'Python', extension: '.py' },
   { value: 'html', label: 'HTML', extension: '.html' },
   { value: 'css', label: 'CSS', extension: '.css' },
-  { value: 'json', label: 'JSON', extension: '.json' },
-  { value: 'markdown', label: 'Markdown', extension: '.md' },
+  { value: 'go', label: 'Go', extension: '.go' },
+  { value: 'ruby', label: 'Ruby', extension: '.rb' },
+  { value: 'php', label: 'PHP', extension: '.php' },
+  { value: 'csharp', label: 'C#', extension: '.cs' },
 ]
 
 export default function LanguageSelector({ value, onChange }: LanguageSelectorProps) {

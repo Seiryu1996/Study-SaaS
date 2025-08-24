@@ -201,9 +201,14 @@ export default function NewLessonPage() {
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                 >
                   <option value="javascript">JavaScript</option>
+                  <option value="typescript">TypeScript</option>
                   <option value="python">Python</option>
                   <option value="html">HTML</option>
                   <option value="css">CSS</option>
+                  <option value="go">Go</option>
+                  <option value="ruby">Ruby</option>
+                  <option value="php">PHP</option>
+                  <option value="csharp">C#</option>
                 </select>
               </div>
               <div>

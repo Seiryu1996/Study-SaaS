@@ -13,13 +13,25 @@ function greet(name) {
 }
 
 console.log(greet('World'));`,
+  typescript: `// Welcome to the TypeScript playground!
+interface User {
+  name: string;
+  age: number;
+}
+
+function greet(user: User): string {
+  return \`Hello, \${user.name}! You are \${user.age} years old.\`;
+}
+
+const user: User = { name: "World", age: 25 };
+console.log(greet(user));`,
   python: `# Welcome to the Python playground!
 def greet(name):
     return f"Hello, {name}!"
 
 print(greet("World"))`,
   html: `<!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -43,57 +55,44 @@ h1 {
   font-size: 3rem;
   margin-bottom: 1rem;
 }`,
-  typescript: `// Welcome to the TypeScript playground!
-interface User {
-  name: string;
-  age: number;
+  go: `// Welcome to the Go playground!
+package main
+
+import "fmt"
+
+func greet(name string) string {
+    return fmt.Sprintf("Hello, %s!", name)
 }
 
-function greet(user: User): string {
-  return \`Hello, \${user.name}! You are \${user.age} years old.\`;
-}
-
-const user: User = { name: "World", age: 25 };
-console.log(greet(user));`,
-  json: `{
-  "message": "Welcome to the JSON playground!",
-  "user": {
-    "name": "World",
-    "preferences": {
-      "theme": "dark",
-      "language": "javascript"
-    }
-  },
-  "features": [
-    "syntax highlighting",
-    "auto-completion",
-    "error detection"
-  ]
+func main() {
+    fmt.Println(greet("World"))
 }`,
-  markdown: `# Welcome to the Markdown playground!
+  ruby: `# Welcome to the Ruby playground!
+def greet(name)
+    "Hello, #{name}!"
+end
 
-## Features
-
-- **Bold text**
-- *Italic text*
-- \`Inline code\`
-
-### Code block
-
-\`\`\`javascript
-function hello() {
-  console.log("Hello, World!");
+puts greet("World")`,
+  php: `<?php
+// Welcome to the PHP playground!
+function greet($name) {
+    return "Hello, " . $name . "!";
 }
-\`\`\`
 
-### Links and Lists
+echo greet("World") . "\\n";
+?>`,
+  csharp: `// Welcome to the C# playground!
+using System;
 
-- [Monaco Editor](https://microsoft.github.io/monaco-editor/)
-- [Next.js](https://nextjs.org/)
-- [React](https://reactjs.org/)
-
-> This is a blockquote with **markdown** support!
-`
+class Program {
+    static string Greet(string name) {
+        return $"Hello, {name}!";
+    }
+    
+    static void Main() {
+        Console.WriteLine(Greet("World"));
+    }
+}`
 }
 
 export default function EditorPage() {
