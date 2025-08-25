@@ -71,20 +71,20 @@ export default function DashboardStats({ user }: DashboardStatsProps) {
   ]
 
   return (
-    <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-      <h2 className="text-xl font-semibold mb-6">Learning Statistics</h2>
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+      <h2 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Learning Statistics</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
-          <div key={index} className="bg-gray-50 p-4 rounded-lg">
+          <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <span className="text-2xl">{stat.icon}</span>
               <div className={`w-3 h-3 rounded-full ${stat.color}`}></div>
             </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
+            <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
               {stat.value}
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-gray-300">
               {stat.title}
             </div>
           </div>
@@ -94,14 +94,14 @@ export default function DashboardStats({ user }: DashboardStatsProps) {
       {totalExercises > 0 && (
         <div className="mt-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Overall Progress
             </span>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               {completedExercises} / {totalExercises}
             </span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
             <div 
               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${progressPercentage}%` }}
