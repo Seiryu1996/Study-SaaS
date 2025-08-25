@@ -5,6 +5,7 @@ import CodeEditor from '@/components/editor/CodeEditor'
 import LanguageSelector from '@/components/editor/LanguageSelector'
 import ExecutionPanel from '@/components/editor/ExecutionPanel'
 import Header from '@/components/layout/Header'
+import { useTheme } from '@/contexts/ThemeContext'
 
 const DEFAULT_CODE = {
   javascript: `// Welcome to the JavaScript playground!
@@ -96,9 +97,9 @@ class Program {
 }
 
 export default function EditorPage() {
+  const { theme, toggleTheme } = useTheme()
   const [language, setLanguage] = useState('javascript')
   const [code, setCode] = useState(DEFAULT_CODE.javascript)
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark')
 
   const handleLanguageChange = (newLanguage: string) => {
     setLanguage(newLanguage)
@@ -114,17 +115,17 @@ export default function EditorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
       <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-4">Code Editor</h1>
+        <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Code Editor</h1>
         <div className="flex items-center justify-between mb-4">
           <LanguageSelector value={language} onChange={handleLanguageChange} />
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              onClick={toggleTheme}
+              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
             </button>

@@ -42,8 +42,7 @@ export default function Header() {
           </div>
 
           <div className="flex items-center space-x-4">
-            {/* Theme Toggle - Temporarily disabled */}
-            {/* <ThemeToggle /> */}
+            <ThemeToggle />
             
             {/* Language Switcher */}
             <div className="relative">
